@@ -593,7 +593,7 @@ BTagAnalyzerT<IPTI,VTX>::BTagAnalyzerT(const edm::ParameterSet& iConfig):
   {
     // initialize MVA evaluators
     evaluator_SV_.reset( new TMVAEvaluator() );
-    std::vector<std::string> variables({"z_ratio",
+    std::vector<std::string> variables({"SubJet_csv","z_ratio",
                                         "trackSipdSig_3","trackSipdSig_2","trackSipdSig_1","trackSipdSig_0",
                                         "trackSipdSig_1_0","trackSipdSig_0_0","trackSipdSig_1_1","trackSipdSig_0_1",
                                         "trackSip2dSigAboveCharm_0","trackSip2dSigAboveBottom_0","trackSip2dSigAboveBottom_1",
@@ -602,6 +602,8 @@ BTagAnalyzerT<IPTI,VTX>::BTagAnalyzerT(const edm::ParameterSet& iConfig):
                                         "tau_vertexMass_0","tau_vertexEnergyRatio_0","tau_vertexDeltaR_0","tau_flightDistance2dSig_0",
                                         "tau_vertexMass_1","tau_vertexEnergyRatio_1","tau_flightDistance2dSig_1",
                                         "jetNTracks","nSV"});
+     
+	
     // book TMVA readers
     std::vector<std::string> spectators({"massPruned", "flavour", "nbHadrons", "ptPruned", "etaPruned"});
     
@@ -1870,6 +1872,9 @@ void BTagAnalyzerT<IPTI,VTX>::processJets(const edm::Handle<PatJetCollection>& j
       }
     }
 
+
+
+
     if ( runFatJets_ && iJetColl == 0 )
     {
       // N-subjettiness
@@ -1888,6 +1893,9 @@ void BTagAnalyzerT<IPTI,VTX>::processJets(const edm::Handle<PatJetCollection>& j
       JetInfo[iJetColl].Jet_massPruned[JetInfo[iJetColl].nJet]  = ( pjet->hasUserFloat("Pruned:Mass")       ? pjet->userFloat("Pruned:Mass")       : pjet->userFloat("ak8PFJetsCHSPrunedMass") );
       JetInfo[iJetColl].Jet_jecF0Pruned[JetInfo[iJetColl].nJet] = ( pjet->hasUserFloat("Pruned:jecFactor0") ? pjet->userFloat("Pruned:jecFactor0") : 0. );
     }
+	
+    float sj2_csv =-1, sj1_csv=-1;
+	
     if ( runFatJets_ && runSubJets_ && iJetColl == 0 )
     {
       for ( size_t i = 0; i < SubJetLabels_.size(); ++i )
@@ -1915,8 +1923,12 @@ void BTagAnalyzerT<IPTI,VTX>::processJets(const edm::Handle<PatJetCollection>& j
         SubJetInfo[SubJetLabels_[i]].Jet_nSubJets[JetInfo[iJetColl].nJet] = subjets.size();
         SubJetInfo[SubJetLabels_[i]].Jet_nLastSJ[JetInfo[iJetColl].nJet] = SubJetInfo[SubJetLabels_[i]].nSubJet;
 
+
         // sort subjets by uncorrected Pt
         std::sort(subjets.begin(), subjets.end(), orderByPt("Uncorrected"));
+
+	
+
 
         int nsubjettracks = 0, nsharedsubjettracks = 0;
 
@@ -1928,6 +1940,10 @@ void BTagAnalyzerT<IPTI,VTX>::processJets(const edm::Handle<PatJetCollection>& j
             int subjetIdx = (sj==0 ? 0 : 1); // subjet index
             int compSubjetIdx = (sj==0 ? 1 : 0); // companion subjet index
             int nTracks = ( subjets.at(subjetIdx)->hasTagInfo(ipTagInfos_.c_str()) ? toIPTagInfo(*(subjets.at(subjetIdx)),ipTagInfos_)->selectedTracks().size() : 0 );
+	    if(sj==0)sj1_csv = subjets.at(subjetIdx)->bDiscriminator(combinedIVFSVBJetTags_.c_str());
+	    else sj2_csv = subjets.at(subjetIdx)->bDiscriminator(combinedIVFSVBJetTags_.c_str());
+	    
+	    //std::cout<<" csv "<<sj1_csv<<"   "<<sj2_csv<<std::endl;	
 
             for(int t=0; t<nTracks; ++t)
             {
@@ -3353,6 +3369,8 @@ void BTagAnalyzerT<IPTI,VTX>::processJets(const edm::Handle<PatJetCollection>& j
 
       JetInfo[iJetColl].Jet_nTracks_fat[JetInfo[iJetColl].nJet] = vars.get(reco::btau::jetNTracks);
       JetInfo[iJetColl].Jet_nSV_fat[JetInfo[iJetColl].nJet] = vars.get(reco::btau::jetNSecondaryVertices);
+
+
       //--------------------------
 
       std::map<std::string,float> variables;
@@ -3383,6 +3401,7 @@ void BTagAnalyzerT<IPTI,VTX>::processJets(const edm::Handle<PatJetCollection>& j
       variables["tau_flightDistance2dSig_1"] = JetInfo[iJetColl].Jet_tau2_flightDistance2dSig[JetInfo[iJetColl].nJet];
       variables["jetNTracks"] = JetInfo[iJetColl].Jet_nTracks_fat[JetInfo[iJetColl].nJet];
       variables["nSV"] = JetInfo[iJetColl].Jet_nSV_fat[JetInfo[iJetColl].nJet];
+      variables["SubJet_csv"]=TMath::Min(sj2_csv,sj1_csv);
 
       JetInfo[iJetColl].Jet_BDTG_SV[JetInfo[iJetColl].nJet] = evaluator_SV_->evaluate(variables);
 

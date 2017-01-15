@@ -64,17 +64,17 @@ options.register('dataGlobalTagPrompt', '80X_dataRun2_Prompt_v15',
     VarParsing.varType.string,
     "Data global tag for RunH"
 )
-options.register('runJetClustering', False,
+options.register('runJetClustering', True,
     VarParsing.multiplicity.singleton,
     VarParsing.varType.bool,
     "Cluster jets from scratch instead of using those already present in the event"
 )
-options.register('runFatJets', False,
+options.register('runFatJets', True,
     VarParsing.multiplicity.singleton,
     VarParsing.varType.bool,
     "Run fat jets"
 )
-options.register('runSubJets', False,
+options.register('runSubJets', True,
     VarParsing.multiplicity.singleton,
     VarParsing.varType.bool,
     "Run subjets"
@@ -134,12 +134,12 @@ options.register('useExplicitJTA', False,
     VarParsing.varType.bool,
     "Use explicit jet-track association"
 )
-options.register('jetAlgo', 'AntiKt',
+options.register('jetAlgo', 'CambridgeAachen',
     VarParsing.multiplicity.singleton,
     VarParsing.varType.string,
     "Jet clustering algorithms (default is AntiKt)"
 )
-options.register('fatJetRadius', 0.8,
+options.register('fatJetRadius', 1.5,
     VarParsing.multiplicity.singleton,
     VarParsing.varType.float,
     "Distance parameter R for fat jet clustering (default is 0.8)"
@@ -166,7 +166,7 @@ options.register('runIVF', False,
     "Run IVF, currently leave to False!"
 )
 ## Master switch for boosted b tag commissioning: overrider several other switches
-options.register('doBoostedCommissioning', False, 
+options.register('doBoostedCommissioning', True, 
     VarParsing.multiplicity.singleton,
     VarParsing.varType.bool,
     "Make NTuples with branches for boosted b tag commissioning: overrider several other switches"
@@ -1278,7 +1278,7 @@ if options.runFatJets:
         maxDeltaR           = cms.double(options.fatJetRadius),
         R0                  = cms.double(options.fatJetRadius),
         maxSVDeltaRToJet    = cms.double(options.fatJetRadius-(0.1+(options.fatJetRadius-0.8)*(0.4/0.7))), # linear interpolation from 0.7 at R=0.8 to 1.0 at R=1.5
-        weightFile          = cms.FileInPath('RecoBTag/PerformanceMeasurements/data/BoostedDoubleSV_' + ('CA15' if algoLabel=='CA' else 'AK8') + '_BDT_v3.weights.xml.gz'),
+	weightFile          = cms.FileInPath('RecoBTag/PerformanceMeasurements/data/Boosted'+ ('SVDoubleCA15_withSubjet_v4' if algoLabel=='CA' else 'SVDoubleCA15_withSubjet_v4')+'.weights.xml.gz'),
         doubleSVBJetTags    = cms.string('pfBoostedDoubleSecondaryVertex' + ('CA15' if algoLabel=='CA' else 'AK8') + 'BJetTags'),
         distJetAxis         = cms.double(9999.),
         decayLength         = cms.double(9999.),
